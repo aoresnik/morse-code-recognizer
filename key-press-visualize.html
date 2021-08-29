@@ -95,9 +95,12 @@
             }
 
             function animate(canvas, context, startTime) {
-                indicatorY = canvas.height / 2 + 60;
-                indicatorH = 10
-                context.clearRect(0, indicatorY, canvas.width, indicatorH);
+                let indicatorY = canvas.height / 2 + 60;
+                let indicatorH = 10;
+                // TODO: ensure that text is not drawn outside of this boundary
+                let textH = 50;
+
+                context.clearRect(0, indicatorY, canvas.width, indicatorH  + textH);
 
                 function barX(t) {
                     return canvas.width / 2 - ((new Date()).getTime() - t) / 10;
@@ -108,8 +111,23 @@
                 while (i >= 0) {
                     const x0 = barX(dashes[i].start);
                     const x1 = dashes[i].end ? barX(dashes[i].end) : canvas.width / 2;
+                    if (x1 < 0)
+                    {
+                        break;
+                    }
                     //console.log("Drawing bar from " + x0 + "-" + x1);
                     context.fillRect(x0, indicatorY, x1 - x0, indicatorH);
+
+                    if (dashes[i].end)
+                    {
+                        context.save();
+                        context.translate((x1+x0)/2, indicatorY+indicatorH+2);
+                        context.rotate(-Math.PI / 2);
+                        context.textAlign = 'right';
+                        context.fillText((dashes[i].end-dashes[i].start) + " ms", 0, 10 / 2);
+                        context.restore();
+                    }
+
                     i--;
                 }
 
