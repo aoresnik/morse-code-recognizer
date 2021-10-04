@@ -138,7 +138,11 @@
             }
 
             let AudioContext = window.AudioContext || window.webkitAudioContext;
-            let audioCtx = new AudioContext();
+            let audioCtx = new AudioContext({
+                latencyHint: 'interactive',
+                // Preferred frequency is 44100 Hz (loops calculated for it)
+                sampleRate: 44100,
+            });
             let channels = 1;
 
             /**
