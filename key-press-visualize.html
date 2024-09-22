@@ -50,6 +50,16 @@
                 context.stroke();
             }
 
+            function updateRhythmIndicator() {
+                context.beginPath();
+                context.ellipse(15, 15, 10, 10, 0, 0, 2 * Math.PI);;
+                const d = new Date();
+                let time = d.getTime();
+                let indicatorState = time % 1000 < 200;
+                context.fillStyle = indicatorState ? 'red' : 'black';
+                context.fill();
+            }
+
             function keydown(e) {
                 e = e || window.event;
                 if (!pressState) {
@@ -114,6 +124,8 @@
                 function barX(t) {
                     return canvas.width / 2 - ((new Date()).getTime() - t) / 10;
                 }
+
+                updateRhythmIndicator();
 
                 context.fillStyle = 'black';
                 let i = dashes.length - 1;
