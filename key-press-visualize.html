@@ -72,7 +72,11 @@
 
                     console.log("Key pressed at " + t);
                     pressState = true;
+                    if (dashes.length > 0) {
+                        dashes[dashes.length - 1].end = t;
+                    } 
                     dashes.push({
+                        pressed: true,
                         start: t,
                         end: null
                     });
@@ -92,6 +96,11 @@
                 pressState = false;
                 updateIndicator();
                 dashes[dashes.length - 1].end = t;
+                dashes.push({
+                        pressed: false,
+                        start: t,
+                        end: null
+                    });
             }
 
             function animate(canvas, context, startTime) {
@@ -116,8 +125,11 @@
                         break;
                     }
                     //console.log("Drawing bar from " + x0 + "-" + x1);
-                    context.fillRect(x0, indicatorY, x1 - x0, indicatorH);
 
+                    if (dashes[i].pressed)
+                    {
+                        context.fillRect(x0, indicatorY, x1 - x0, indicatorH);
+                    }
                     if (dashes[i].end)
                     {
                         context.save();
