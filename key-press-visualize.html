@@ -46,8 +46,6 @@
                 context.fillStyle = pressState ? 'red' : 'black';
                 context.fill();
                 context.lineWidth = 1;
-                context.strokeStyle = 'black';
-                context.stroke();
             }
 
             function updateRhythmIndicator() {
@@ -55,9 +53,19 @@
                 context.ellipse(15, 15, 10, 10, 0, 0, 2 * Math.PI);;
                 const d = new Date();
                 let time = d.getTime();
-                let indicatorState = time % 1000 < 200;
+                let indicatorState = (time % dotDurationMS) < (0.2 * dotDurationMS);
                 context.fillStyle = indicatorState ? 'red' : 'black';
                 context.fill();
+
+                let periodStart = Math.floor(time / dotDurationMS) * dotDurationMS;
+                if (periodMarkers.length > 0) {
+                    if (periodMarkers[periodMarkers.length - 1] < periodStart) {
+                        periodMarkers.push(periodStart);
+                    }
+                } else {
+                    periodMarkers.push(periodStart);
+                }
+
             }
 
             function keydown(e) {
@@ -119,7 +127,7 @@
                 // TODO: ensure that text is not drawn outside of this boundary
                 let textH = 50;
 
-                context.clearRect(0, indicatorY, canvas.width, indicatorH  + textH);
+                context.clearRect(0, indicatorY - indicatorH, canvas.width, indicatorH + indicatorH  + textH);
 
                 function barX(t) {
                     return canvas.width / 2 - ((new Date()).getTime() - t) / 10;
@@ -154,6 +162,21 @@
 
                     i--;
                 }
+
+                i = periodMarkers.length - 1;
+                while (i >= 0) {
+                    const x0 = barX(periodMarkers[i]);
+                    if (x0 < 0)
+                    {
+                        break;
+                    }
+                    //console.log("Drawing bar from " + x0 + "-" + x1);
+
+                    context.fillRect(x0, indicatorY-indicatorH, 1, 2*indicatorH);
+
+                    i--;
+                }
+
 
                 // request new frame
                 requestAnimFrame(function() {
@@ -216,6 +239,8 @@
             var context = canvas.getContext('2d');
             var pressState = false;
             var dashes = [];
+            var periodMarkers = [];
+            var dotDurationMS = 500;
 
             document.onkeydown = keydown;
             document.onkeyup = keyup;
