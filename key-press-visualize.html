@@ -2,6 +2,7 @@
 
 <!-- Shows an indicator when any key is pressed. Planned as a basis for morse code typing parser. -->
 
+
 <html>
 
 <head>
@@ -68,6 +69,30 @@
 
             }
 
+            function handleDash(dash) {
+                const tolerance = 0.4;
+                let duration = dash.end - dash.start;
+                if (dash.pressed) {
+                    if (Math.abs(duration - dotDurationMS) < tolerance * dotDurationMS) {
+                        console.log("Dot");
+                    } else if (Math.abs(duration - 3 * dotDurationMS) < tolerance * 3 * dotDurationMS) {
+                        console.log("Dash");
+                    } else {
+                        console.log("Unknown symbol");
+                    }
+                } else {
+                    if (Math.abs(duration - dotDurationMS) < tolerance * dotDurationMS) {
+                            console.log("(same letter space)");
+                        } else if (Math.abs(duration - 3 * dotDurationMS) < tolerance * 3 * dotDurationMS) {
+                            console.log("(different letter space)");
+                        } else if (Math.abs(duration - 5 * dotDurationMS) < tolerance * 5 * dotDurationMS) {
+                            console.log("(word space)");
+                        } else {
+                            console.log("(Unknown space)");
+                        }
+                }
+            }
+
             function keydown(e) {
                 e = e || window.event;
                 if (!pressState) {
@@ -88,10 +113,11 @@
                     // start the source playing
                     soundSource.start();
 
-                    console.log("Key pressed at " + t);
+                    //console.log("Key pressed at " + t);
                     pressState = true;
                     if (dashes.length > 0) {
                         dashes[dashes.length - 1].end = t;
+                        handleDash(dashes[dashes.length - 1]);
                     } 
                     dashes.push({
                         pressed: true,
@@ -110,10 +136,11 @@
                     // Stop by disabling looping - the sound will end with the ramp down
                     soundSource.loop = false;
                 }
-                console.log("Key released at " + t);
+                //console.log("Key released at " + t);
                 pressState = false;
                 updateIndicator();
                 dashes[dashes.length - 1].end = t;
+                handleDash(dashes[dashes.length - 1]);
                 dashes.push({
                         pressed: false,
                         start: t,
@@ -136,6 +163,8 @@
                 updateRhythmIndicator();
 
                 context.fillStyle = 'black';
+                context.save();
+                context.textAlign = 'right';
                 let i = dashes.length - 1;
                 while (i >= 0) {
                     const x0 = barX(dashes[i].start);
@@ -152,16 +181,15 @@
                     }
                     if (dashes[i].end)
                     {
-                        context.save();
                         context.translate((x1+x0)/2, indicatorY+indicatorH+2);
                         context.rotate(-Math.PI / 2);
-                        context.textAlign = 'right';
                         context.fillText((dashes[i].end-dashes[i].start) + " ms", 0, 10 / 2);
-                        context.restore();
+                        context.resetTransform();
                     }
 
                     i--;
                 }
+                context.restore();
 
                 i = periodMarkers.length - 1;
                 while (i >= 0) {
@@ -238,8 +266,11 @@
             var canvas = document.getElementById('canvas0');
             var context = canvas.getContext('2d');
             var pressState = false;
+
+            // TODO: limit these to some reasonable number
             var dashes = [];
             var periodMarkers = [];
+
             var dotDurationMS = 500;
 
             document.onkeydown = keydown;
