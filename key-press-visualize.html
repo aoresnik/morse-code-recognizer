@@ -2,31 +2,10 @@
 
 <!-- Shows an indicator when any key is pressed. Planned as a basis for morse code typing parser. -->
 
-
 <html>
 
 <head>
     <style media="screen" type="text/css">
-        * {
-            margin: 0;
-            padding: 0;
-        }
-
-        /* to remove the top and left whitespace */
-
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-        }
-
-        /* just to be sure these are full screen*/
-
-        canvas {
-            display: block;
-        }
-
-        /* To remove the scrollbars */
     </style>
     <script type="text/javascript">
         // based on https://www.html5canvastutorials.com/advanced/html5-canvas-animation-stage/
@@ -277,11 +256,11 @@
             document.onkeyup = keyup;
 
             // resize the canvas to fill browser window dynamically
-            window.addEventListener('resize', resizeCanvas, false);
+            //window.addEventListener('resize', resizeCanvas, false);
 
             function resizeCanvas() {
                 canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
+                //canvas.height = window.innerHeight;
             }
             resizeCanvas();
             updateIndicator();
@@ -296,7 +275,8 @@
 </head>
 
 <body onload="main()">
-    <canvas id="canvas0"></canvas>
-
+    <textarea id="resultText" rows="4" cols="50" placeholder=""></textarea>
+    <br>
+    <canvas id="canvas0" height="300px"></canvas>
 </html>
 </body>
