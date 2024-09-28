@@ -10,8 +10,6 @@
     <script type="text/javascript">
         // based on https://www.html5canvastutorials.com/advanced/html5-canvas-animation-stage/
 
-        // FIXME: the ball speed is dependent on the display DPI and frame rate, should be constant
-
         function main() {
             window.requestAnimFrame = (function(callback) {
                 return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame ||
@@ -48,26 +46,49 @@
 
             }
 
+            function addCharacter(character) {
+                let resultText = document.getElementById("resultText");
+                resultText.value = resultText.value + character;
+            }
+
+            function parseWord() {
+                console.log("Parsing morse sequence: " + letterBuffer);
+                let letter = morseCodeToLetter.get(letterBuffer);
+                if (letter !== undefined) {
+                    addCharacter(letter);
+                } else {
+                    console.log("Unknown letter: " + letterBuffer);
+                }
+                letterBuffer = "";
+            }
+
             function handleDash(dash) {
-                const tolerance = 0.4;
                 let duration = dash.end - dash.start;
                 if (dash.pressed) {
                     if (Math.abs(duration - dotDurationMS) < tolerance * dotDurationMS) {
-                        console.log("Dot");
+                        letterBuffer = letterBuffer + ".";
+                        console.log("Buffer: " + letterBuffer);
                     } else if (Math.abs(duration - 3 * dotDurationMS) < tolerance * 3 * dotDurationMS) {
-                        console.log("Dash");
+                        letterBuffer = letterBuffer + "-";
+                        console.log("Buffer: " + letterBuffer);
                     } else {
                         console.log("Unknown symbol");
                     }
                 } else {
+                    // TODO: handle end of word space before the next key is pressed
                     if (Math.abs(duration - dotDurationMS) < tolerance * dotDurationMS) {
                             console.log("(same letter space)");
                         } else if (Math.abs(duration - 3 * dotDurationMS) < tolerance * 3 * dotDurationMS) {
                             console.log("(different letter space)");
+                            parseWord();
                         } else if (Math.abs(duration - 5 * dotDurationMS) < tolerance * 5 * dotDurationMS) {
-                            console.log("(word space)");
+                            console.log("(different word space)");
+                            parseWord();
+                            addCharacter(' ');
                         } else {
-                            console.log("(Unknown space)");
+                            console.log("(Unknown space, assuming word space)");
+                            parseWord();
+                            addCharacter(' ')
                         }
                 }
             }
@@ -185,6 +206,16 @@
                 }
 
 
+                if (!pressState && (letterBuffer.length > 0)) {
+                    //console.log("Key pressed at " + t);
+                    const t = (new Date()).getTime()
+                    if (t-dashes[dashes.length - 1].start > 3 * dotDurationMS + (tolerance * 3 * dotDurationMS))
+                    {
+                        console.log("Max inter letter space exceeded, parsing word");
+                        parseWord();
+                    }
+                } 
+
                 // request new frame
                 requestAnimFrame(function() {
                     animate(canvas, context, startTime);
@@ -208,6 +239,51 @@
             const RAMP_UP_TIME_MS = 2;
             const BUFFER_LEN_MS = 100+2*RAMP_UP_TIME_MS; // High latency, but I was unable to get clear audio with less than 100 ms
             const VOLUME = 0.1;
+
+            const letterToMorseCode  = new Map([
+                ["a", ".-"],
+                ["b", "-..."],
+                ["c", "-.-."],
+                ["d", "-.."],
+                ["e", "."], 
+                ["f", "..-."],
+                ["g", "--."],
+                ["h", "...."],
+                ["i", ".."],
+                ["j", ".---"],
+                ["k", "-.-"],
+                ["l", ".-.."],
+                ["m", "--"],
+                ["n", "-."],
+                ["o", "---"],
+                ["p", ".--."],
+                ["q", "--.-"],
+                ["r", ".-."],
+                ["s", "..."],
+                ["t", "-"],
+                ["u", "..-"],
+                ["v", "...-"],
+                ["x", "-..-"],
+                ["y", "-.--"],
+                ["z", "--.."],
+
+                ["1", ".----"],
+                ["2", "..---"],
+                ["3", "...--"],
+                ["4", "....-"],
+                ["5", "....."],  
+                ["6", "-...."],
+                ["7", "--..."],
+                ["8", "---.."],
+                ["9", "----."],
+                ["0", "-----"],
+            ]);
+
+            const morseCodeToLetter = new Map();
+
+            for (const key of letterToMorseCode.keys()) {
+                morseCodeToLetter.set(letterToMorseCode.get(key), key);
+            }
 
             // Create an empty two second stereo buffer at the
             // sample rate of the AudioContext
@@ -251,6 +327,9 @@
             var periodMarkers = [];
 
             var dotDurationMS = 500;
+            const tolerance = 0.4;
+
+            var letterBuffer = "";
 
             document.onkeydown = keydown;
             document.onkeyup = keyup;
@@ -275,7 +354,7 @@
 </head>
 
 <body onload="main()">
-    <textarea id="resultText" rows="4" cols="50" placeholder=""></textarea>
+    <textarea id="resultText" rows="4" cols="50" placeholder="" readonly="true"></textarea>
     <br>
     <canvas id="canvas0" height="300px"></canvas>
 </html>
