@@ -19,29 +19,40 @@
             })();
 
             function updateIndicator() {
-                context.beginPath();
-                context.ellipse(canvas.width / 2, canvas.height / 2, 50, 50, 0, 0, 2 * Math.PI);;
-                context.fillStyle = pressState ? 'red' : 'black';
-                context.fill();
-                context.lineWidth = 1;
+                if (updateIndicator.prevIndicatorState !== pressState) {
+                    context.beginPath();
+                    context.ellipse(canvas.width / 2, canvas.height / 2, 50, 50, 0, 0, 2 * Math.PI);;
+                    context.fillStyle = pressState ? 'red' : 'black';
+                    context.fill();
+                    context.lineWidth = 1;
+                    updateIndicator.prevIndicatorState = pressState;
+                }
             }
 
             function updateRhythmIndicator() {
-                context.beginPath();
-                context.ellipse(15, 15, 10, 10, 0, 0, 2 * Math.PI);;
                 const d = new Date();
                 let time = d.getTime();
                 let indicatorState = (time % dotDurationMS) < (0.2 * dotDurationMS);
-                context.fillStyle = indicatorState ? 'red' : 'black';
-                context.fill();
+                if (updateRhythmIndicator.prevIndicatorState !== indicatorState) {
+                    context.beginPath();
+                    context.ellipse(15, 15, 10, 10, 0, 0, 2 * Math.PI);;
+                    context.fillStyle = indicatorState ? 'red' : 'black';
+                    context.fill();             
+                    updateRhythmIndicator.prevIndicatorState = indicatorState;
+                }
+
+                const MARKERS_AHEAD = 5;
 
                 let periodStart = Math.floor(time / dotDurationMS) * dotDurationMS;
-                if (periodMarkers.length > 0) {
-                    if (periodMarkers[periodMarkers.length - 1] < periodStart) {
-                        periodMarkers.push(periodStart);
+                if (periodMarkers.length > 0) { 
+                    let nextMarker = periodStart + MARKERS_AHEAD * dotDurationMS;
+                    if (periodMarkers[periodMarkers.length - 1] < nextMarker) {
+                        periodMarkers.push(nextMarker);
                     }
                 } else {
-                    periodMarkers.push(periodStart);
+                    for (let i = 0; i < MARKERS_AHEAD; i++) {
+                        periodMarkers.push(periodStart + i * dotDurationMS);
+                    }
                 }
 
             }
