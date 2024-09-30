@@ -21,7 +21,7 @@
             function updateIndicator() {
                 if (updateIndicator.prevIndicatorState !== pressState) {
                     context.beginPath();
-                    context.ellipse(canvas.width / 2, canvas.height / 2, 50, 50, 0, 0, 2 * Math.PI);;
+                    context.ellipse(originX, canvas.height / 2, 50, 50, 0, 0, 2 * Math.PI);;
                     context.fillStyle = pressState ? 'red' : 'black';
                     context.fill();
                     context.lineWidth = 1;
@@ -32,6 +32,7 @@
             function updateRhythmIndicator() {
                 const d = new Date();
                 let time = d.getTime();
+                /*
                 let indicatorState = (time % dotDurationMS) < (0.2 * dotDurationMS);
                 if (updateRhythmIndicator.prevIndicatorState !== indicatorState) {
                     context.beginPath();
@@ -40,6 +41,8 @@
                     context.fill();             
                     updateRhythmIndicator.prevIndicatorState = indicatorState;
                 }
+
+                */
 
                 const MARKERS_AHEAD = 5;
 
@@ -168,7 +171,7 @@
                 context.clearRect(0, indicatorY - indicatorH, canvas.width, indicatorH + indicatorH  + textH);
 
                 function barX(t) {
-                    return canvas.width / 2 - ((new Date()).getTime() - t) / 10;
+                    return originX - ((new Date()).getTime() - t) / 10;
                 }
 
                 updateRhythmIndicator();
@@ -179,7 +182,7 @@
                 let i = dashes.length - 1;
                 while (i >= 0) {
                     const x0 = barX(dashes[i].start);
-                    const x1 = dashes[i].end ? barX(dashes[i].end) : canvas.width / 2;
+                    const x1 = dashes[i].end ? barX(dashes[i].end) : originX;
                     if (x1 < 0)
                     {
                         break;
@@ -350,6 +353,7 @@
 
             function resizeCanvas() {
                 canvas.width = window.innerWidth;
+                originX = canvas.width - 300;
                 //canvas.height = window.innerHeight;
             }
             resizeCanvas();
