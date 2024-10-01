@@ -336,6 +336,11 @@
             var context = canvas.getContext('2d');
             var pressState = false;
 
+            var unitDurationSelect = document.getElementById('unitDuration');
+            unitDurationSelect.onchange = function() {
+                dotDurationMS = parseInt(unitDurationSelect.value);
+            }
+
             // TODO: limit these to some reasonable number
             var dashes = [];
             var periodMarkers = [];
@@ -369,7 +374,15 @@
 </head>
 
 <body onload="main()">
+    <label for="resultText">Text:</label>
     <textarea id="resultText" rows="4" cols="50" placeholder="" readonly="true"></textarea>
+    <label for="unitDuration">Unit duration:</label>
+    <select name="unitDuration" id="unitDuration">
+        <option value="100">100ms</option>
+        <option value="250">250ms</option>
+        <option value="500" selected="true">500ms</option>
+        <option value="1000">1000ms</option>
+    </select>
     <br>
     <canvas id="canvas0" height="300px"></canvas>
 </html>
