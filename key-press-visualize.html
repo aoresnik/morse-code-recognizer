@@ -339,6 +339,8 @@
             var unitDurationSelect = document.getElementById('unitDuration');
             unitDurationSelect.onchange = function() {
                 dotDurationMS = parseInt(unitDurationSelect.value);
+                let resultText = document.getElementById("resultText");
+                resultText.focus();
             }
 
             // TODO: limit these to some reasonable number
@@ -361,7 +363,7 @@
                 originX = canvas.width - 300;
                 //canvas.height = window.innerHeight;
             }
-            resizeCanvas();
+            resizeCanvas();                                 
             updateIndicator();
 
             // wait one second before starting animation
