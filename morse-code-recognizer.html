@@ -115,8 +115,9 @@
                     const t = (new Date()).getTime()
 
                     beeper.start();
-
-                    //console.log("Key pressed at " + t);
+                    if (KEYS_DEBUG) {
+                        console.log("Key pressed at " + t);
+                    }
                     pressState = true;
                     if (dashes.length > 0) {
                         dashes[dashes.length - 1].end = t;
@@ -134,18 +135,36 @@
 
             function keyup(e) {
                 e = e || window.event;
-                const t = (new Date()).getTime()
-                beeper.stop();
-                //console.log("Key released at " + t);
-                pressState = false;
-                updateIndicator();
-                dashes[dashes.length - 1].end = t;
-                handleDash(dashes[dashes.length - 1]);
-                dashes.push({
-                        pressed: false,
-                        start: t,
-                        end: null
-                    });
+                if (pressState) {
+                    // Only if pressed
+                    const t = (new Date()).getTime()
+                    beeper.stop();
+                    if (KEYS_DEBUG) {
+                        console.log("Key released at " + t);    
+                    }
+                    pressState = false;
+                    updateIndicator();
+                    dashes[dashes.length - 1].end = t;
+                    handleDash(dashes[dashes.length - 1]);
+                    dashes.push({
+                            pressed: false,
+                            start: t,
+                            end: null
+                        });
+                }
+            }
+
+            function cancelkeydown(e) {
+                console.log("Losing focus");
+                if (pressState) {
+                    beeper.stop();
+                    dashes.splice(-1);
+                    if (dashes.length > 0) {
+                        dashes[dashes.length - 1].end = undefined;
+                    }
+                    pressState = false;
+                    updateIndicator();
+                }
             }
 
             function animate(canvas, context, startTime) {
@@ -348,10 +367,11 @@
 
             const morseCodeToLetter = new Map();
 
+            const KEYS_DEBUG = false;
+
             for (const key of letterToMorseCode.keys()) {
                 morseCodeToLetter.set(letterToMorseCode.get(key), key);
             }
-
 
             var canvas = document.getElementById('canvas0');
             var context = canvas.getContext('2d');
@@ -375,6 +395,9 @@
 
             document.onkeydown = keydown;
             document.onkeyup = keyup;
+
+            // Fix: avoid beeping when exiting the tab with keyboard shortcut
+            window.onblur = cancelkeydown;
 
             // resize the canvas to fill browser window dynamically
             //window.addEventListener('resize', resizeCanvas, false);
