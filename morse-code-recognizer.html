@@ -384,6 +384,13 @@
                 resultText.focus();
             }
 
+            var clearTextButton = document.getElementById('clearText');
+            clearTextButton.onclick = function() {
+                let resultText = document.getElementById("resultText");
+                resultText.value = "";
+                resultText.focus();
+            }
+
             // TODO: limit these to some reasonable number
             var dashes = [];
             var periodMarkers = [];
@@ -422,6 +429,7 @@
 <body onload="main()">
     <label for="resultText">Text:</label>
     <textarea id="resultText" rows="4" cols="50" placeholder="" readonly="true"></textarea>
+    <button id="clearText">Clear</button>
     <label for="unitDuration">Unit duration:</label>
     <select name="unitDuration" id="unitDuration">
         <option value="100">100ms</option>
