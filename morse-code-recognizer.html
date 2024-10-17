@@ -57,7 +57,9 @@
                         periodMarkers.push(periodStart + i * dotDurationMS);
                     }
                 }
-
+                if (periodMarkers.length > MAX_PERIOD_MARKERS) {
+                    periodMarkers.shift();
+                }
             }
 
             function addCharacter(character) {
@@ -128,6 +130,9 @@
                         start: t,
                         end: null
                     });
+                    if (dashes.length > MAX_DASHES) {
+                        dashes.shift();
+                    }
 
                     updateIndicator();
                 }
@@ -391,7 +396,9 @@
                 resultText.focus();
             }
 
-            // TODO: limit these to some reasonable number
+            const MAX_DASHES = 1000;
+            const MAX_PERIOD_MARKERS = 1000;
+
             var dashes = [];
             var periodMarkers = [];
 
