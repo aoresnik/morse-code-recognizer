@@ -20,9 +20,15 @@
 
             function updateIndicator() {
                 if (updateIndicator.prevIndicatorState !== pressState) {
+                    let indicatorY = canvas.height / 2 + 60;
+                    let indicatorH = 10;
+                    context.clearRect(originX-50,  0, 100, indicatorY);
                     context.beginPath();
-                    context.ellipse(originX, canvas.height / 2, 50, 50, 0, 0, 2 * Math.PI);;
-                    context.fillStyle = pressState ? 'red' : 'black';
+                    let shift = pressState ? 0 : 10;
+                    context.moveTo(originX, indicatorY-indicatorH-1-shift);
+                    context.lineTo(originX-49, indicatorY-indicatorH-49-shift);
+                    context.lineTo(originX+49, indicatorY-indicatorH-49-shift);
+                    context.lineTo(originX, indicatorY-indicatorH-1-shift);
                     context.fill();
                     context.lineWidth = 1;
                     updateIndicator.prevIndicatorState = pressState;
@@ -32,17 +38,6 @@
             function updateRhythmIndicator() {
                 const d = new Date();
                 let time = d.getTime();
-                /*
-                let indicatorState = (time % dotDurationMS) < (0.2 * dotDurationMS);
-                if (updateRhythmIndicator.prevIndicatorState !== indicatorState) {
-                    context.beginPath();
-                    context.ellipse(15, 15, 10, 10, 0, 0, 2 * Math.PI);;
-                    context.fillStyle = indicatorState ? 'red' : 'black';
-                    context.fill();             
-                    updateRhythmIndicator.prevIndicatorState = indicatorState;
-                }
-
-                */
 
                 const MARKERS_AHEAD = 5;
 
@@ -201,7 +196,7 @@
 
                     if (dashes[i].pressed)
                     {
-                        context.fillRect(x0, indicatorY, x1 - x0, indicatorH);
+                        context.fillRect(x0, indicatorY-indicatorH, x1 - x0, indicatorH);
                     }
                     if (dashes[i].end)
                     {
