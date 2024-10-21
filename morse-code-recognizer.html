@@ -6,6 +6,17 @@
 
 <head>
     <style media="screen" type="text/css">
+        .legend-column {
+            float: left;
+            width: 12%;
+        }
+
+        /* Clear floats after the columns */
+        .legend-row:after {
+            content: "";
+            display: table;
+            clear: both;
+        } 
     </style>
     <script type="text/javascript">
         // based on https://www.html5canvastutorials.com/advanced/html5-canvas-animation-stage/
@@ -373,6 +384,21 @@
                 morseCodeToLetter.set(letterToMorseCode.get(key), key);
             }
 
+            const legend = document.getElementById("legend");
+            const MAX_PER_COLUMN = 5;
+            let legentHTML = '<div class="legend-row"><div class="legend-column">';
+            let i = 0;
+            for (const key of letterToMorseCode.keys()) {
+                legentHTML +=  key + "&nbsp;" + letterToMorseCode.get(key) + "<br/>";
+                i++;
+                if (i >= MAX_PER_COLUMN) {
+                    legentHTML += '</div><div class="legend-column">';
+                    i = 0;
+                }
+            }
+            legentHTML += "</div></div>";
+            legend.innerHTML = legentHTML;
+
             var canvas = document.getElementById('canvas0');
             var context = canvas.getContext('2d');
             var pressState = false;
@@ -439,6 +465,7 @@
         <option value="500" selected="true">500ms</option>
         <option value="1000">1000ms</option>
     </select>
+    <div id="legend"></div>
     <br>
     <canvas id="canvas0" height="300px"></canvas>
 </html>
