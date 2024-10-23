@@ -418,6 +418,14 @@
                 resultText.focus();
             }
 
+            var copyTextButton = document.getElementById('copyText');
+            copyTextButton.onclick = function() {
+                let resultText = document.getElementById("resultText");
+                resultText.select();
+                document.execCommand("copy");
+            }
+
+
             const MAX_DASHES = 1000;
             const MAX_PERIOD_MARKERS = 1000;
 
@@ -458,6 +466,7 @@
 <body onload="main()">
     <label for="resultText">Text:</label>
     <textarea id="resultText" rows="4" cols="50" placeholder="" readonly="true"></textarea>
+    <button id="copyText">Copy</button>
     <button id="clearText">Clear</button>
     <label for="unitDuration">Unit duration:</label>
     <select name="unitDuration" id="unitDuration">
