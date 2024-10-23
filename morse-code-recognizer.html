@@ -71,6 +71,7 @@
             function addCharacter(character) {
                 let resultText = document.getElementById("resultText");
                 resultText.value = resultText.value + character;
+                resultText.scrollTop = resultText.scrollHeight;
             }
 
             function parseWord() {
