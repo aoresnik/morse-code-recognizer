@@ -33,6 +33,22 @@
                     };
             })();
 
+            var notificationArea = {
+                timerId: null,
+                showNotification: function (message) {
+                    let notifications = document.getElementById("notifications");
+                    notifications.innerHTML = message;
+                    console.log("Showing notification: " + message);
+                    if (this.timerId !== null) {
+                        clearTimeout(this.timerId);
+                        this.timerId = null;
+                    }
+                    this.timerId = setTimeout(function() {
+                        notifications.innerHTML = "";
+                    }, 2000);
+                }
+            };
+
             function updateIndicator() {
                 if (updateIndicator.prevIndicatorState !== pressState) {
                     let indicatorY = canvas.height / 2 + 60;
@@ -80,11 +96,12 @@
 
             function parseWord() {
                 console.log("Parsing morse sequence: " + letterBuffer);
-                let letter = morseCodeToLetter.get(letterBuffer);
-                if (letter !== undefined) {
-                    addCharacter(letter);
-                } else {
-                    console.log("Unknown letter: " + letterBuffer);
+                if (letterBuffer !== "") {
+                    let letter = morseCodeToLetter.get(letterBuffer);
+                    if (letter !== undefined) {
+                        addCharacter(letter);
+                    } else {
+                        notificationArea.showNotification("Unknown morse sequence: " + letterBuffer);}
                 }
                 letterBuffer = "";
             }
@@ -92,15 +109,23 @@
             function handleDash(dash) {
                 let duration = dash.end - dash.start;
                 if (dash.pressed) {
-                    if (Math.abs(duration - dotDurationMS) < tolerance * dotDurationMS) {
+                    if (duration < (1-tolerance) * dotDurationMS) {
+                        notificationArea.showNotification("Too short press");
+                        addCharacter('[?]');
+                    } else if (duration < (1+tolerance) * dotDurationMS) {
                         letterBuffer = letterBuffer + ".";
+                        notificationArea.showNotification("Dot");
                         console.log("Buffer: " + letterBuffer);
-                    } else if (Math.abs(duration - 3 * dotDurationMS) < tolerance * 3 * dotDurationMS) {
+                    } else if (duration < (1-tolerance) * 3 * dotDurationMS) {
+                        notificationArea.showNotification("Indistinct if dot or dash");
+                        addCharacter('[?]');
+                    } else if (duration < (1+tolerance) * 3 * dotDurationMS) {
                         letterBuffer = letterBuffer + "-";
+                        notificationArea.showNotification("Dash");
                         console.log("Buffer: " + letterBuffer);
                     } else {
+                        notificationArea.showNotification("Too long press");
                         addCharacter('[?]');
-                        console.log("Unknown symbol");
                     }
                 } else {
                     // TODO: handle end of word space before the next key is pressed
@@ -482,5 +507,6 @@
     <div id="legend"></div>
     <br>
     <canvas id="canvas0" height="300px"></canvas>
+    <div id="notifications"></div>
 </html>
 </body>
