@@ -94,16 +94,21 @@
                 resultText.scrollTop = resultText.scrollHeight;
             }
 
-            function parseWord() {
+            function parseLetter() {
+                var result = "";
                 console.log("Parsing morse sequence: " + letterBuffer);
                 if (letterBuffer !== "") {
                     let letter = morseCodeToLetter.get(letterBuffer);
                     if (letter !== undefined) {
                         addCharacter(letter);
+                        result = letter;
                     } else {
-                        notificationArea.showNotification("Unknown morse sequence: " + letterBuffer);}
+                        notificationArea.showNotification("Unknown morse sequence: " + letterBuffer);
+                        result = "[?]";
+                    }
                 }
                 letterBuffer = "";
+                return result;
             }
 
             function handleDash(dash) {
@@ -129,20 +134,20 @@
                     }
                 } else {
                     // TODO: handle end of word space before the next key is pressed
-                    if (Math.abs(duration - dotDurationMS) < tolerance * dotDurationMS) {
-                            console.log("(same letter space)");
-                        } else if (Math.abs(duration - 3 * dotDurationMS) < tolerance * 3 * dotDurationMS) {
-                            console.log("(different letter space)");
-                            parseWord();
-                        } else if (Math.abs(duration - 5 * dotDurationMS) < tolerance * 5 * dotDurationMS) {
-                            console.log("(different word space)");
-                            parseWord();
-                            addCharacter(' ');
-                        } else {
-                            console.log("(Unknown space, assuming word space)");
-                            parseWord();
-                            addCharacter(' ')
-                        }
+                    if (duration < (1+tolerance) * dotDurationMS) {
+                        console.log("(same letter space)");
+                    } else if (duration < (1+tolerance) * 3 * dotDurationMS) {
+                        console.log("(different letter space)");
+                        parseLetter();
+                    } else if (duration < (1+tolerance) * 5 * dotDurationMS) {
+                        console.log("(different word space)");
+                        parseLetter();
+                        addCharacter(' ');
+                    } else {
+                        console.log("(Unknown space, assuming word space)");
+                        parseLetter();
+                        addCharacter(' ')
+                    }
                 }
             }
 
@@ -258,8 +263,6 @@
                     {
                         break;
                     }
-                    //console.log("Drawing bar from " + x0 + "-" + x1);
-
                     context.fillRect(x0, indicatorY-indicatorH, 1, 2*indicatorH);
 
                     i--;
@@ -270,8 +273,9 @@
                     const t = (new Date()).getTime()
                     if (t-dashes[dashes.length - 1].start > 3 * dotDurationMS + (tolerance * 3 * dotDurationMS))
                     {
-                        console.log("Max inter letter space exceeded, parsing word");
-                        parseWord();
+                        let sequence = letterBuffer;
+                        let parsedAs = parseLetter();
+                        notificationArea.showNotification("Max time between letters exceeded - recognizing a sequence " + sequence + " as " + parsedAs);
                     }
                 } 
 
