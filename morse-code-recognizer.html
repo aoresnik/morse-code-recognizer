@@ -5,6 +5,7 @@
 <html>
 
 <head>
+    <title>Morse Code Recognizer</title>
     <style media="screen" type="text/css">
         .legend-column {
             float: left;
@@ -497,6 +498,8 @@
 </head>
 
 <body onload="main()">
+    <div>Morse Code Recognizer</div>
+    <div>Use any key to signal in morse code</div>
     <label for="resultText">Text:</label>
     <textarea id="resultText" rows="4" cols="50" placeholder="" readonly="true"></textarea>
     <button id="copyText">Copy</button>
@@ -510,6 +513,16 @@
     </select>
     <div id="legend"></div>
     <br>
+    <div>
+        <p>Timings</p>        
+        <ul>
+            <li>Dot .: 1 unit</li>
+            <li>Dash -: 3 units</li>
+            <li>Space in the same letter: 1 unit</li>
+            <li>Space between letters: 3 units</li>
+            <li>Space between words: 5 units or more</li>
+        </ul>
+    </div>
     <canvas id="canvas0" height="300px"></canvas>
     <div id="notifications"></div>
 </html>
