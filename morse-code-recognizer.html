@@ -438,7 +438,22 @@
             var context = canvas.getContext('2d');
             var pressState = false;
 
+            var dotDurationMS = 240;
+            var unitDurationOptions = [60, 240, 400, 600];
+
             var unitDurationSelect = document.getElementById('unitDuration');
+
+            for (let i = 0; i < unitDurationOptions.length; i++) {
+                let option = document.createElement("option");
+                option.value = unitDurationOptions[i];
+                if (unitDurationOptions[i] === dotDurationMS) {
+                    option.selected = true;
+                }
+                let wpm = Math.round(1 / (unitDurationOptions[i] * 50 / 60 / 1000));
+                option.text = unitDurationOptions[i] + " ms (" + wpm + " wpm)";
+                unitDurationSelect.add(option);
+            }
+
             unitDurationSelect.onchange = function() {
                 dotDurationMS = parseInt(unitDurationSelect.value);
                 let resultText = document.getElementById("resultText");
@@ -466,7 +481,6 @@
             var dashes = [];
             var periodMarkers = [];
 
-            var dotDurationMS = 250;
             const tolerance = 0.4;
 
             var letterBuffer = "";
@@ -506,10 +520,6 @@
     <button id="clearText">Clear</button>
     <label for="unitDuration">Unit duration:</label>
     <select name="unitDuration" id="unitDuration">
-        <option value="100">100ms</option>
-        <option value="250" selected="true">250ms</option>
-        <option value="500">500ms</option>
-        <option value="1000">1000ms</option>
     </select>
     <div id="legend"></div>
     <br>
