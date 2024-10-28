@@ -70,19 +70,13 @@
             function updateRhythmIndicator() {
                 const d = new Date();
                 let time = d.getTime();
-
-                const MARKERS_AHEAD = 5;
-
-                let periodStart = Math.floor(time / dotDurationMS) * dotDurationMS;
                 if (periodMarkers.length > 0) { 
-                    let nextMarker = periodStart + MARKERS_AHEAD * dotDurationMS;
-                    if (periodMarkers[periodMarkers.length - 1] < nextMarker) {
-                        periodMarkers.push(nextMarker);
+                    let lastPeriodStart = periodMarkers[periodMarkers.length - 1];
+                    if (time >= lastPeriodStart + dotDurationMS) {
+                        periodMarkers.push(lastPeriodStart + dotDurationMS);
                     }
                 } else {
-                    for (let i = 0; i < MARKERS_AHEAD; i++) {
-                        periodMarkers.push(periodStart + i * dotDurationMS);
-                    }
+                    periodMarkers.push(time);
                 }
                 if (periodMarkers.length > MAX_PERIOD_MARKERS) {
                     periodMarkers.shift();
@@ -257,6 +251,7 @@
                 }
                 context.restore();
 
+                // Period markers in the past
                 i = periodMarkers.length - 1;
                 while (i >= 0) {
                     const x0 = barX(periodMarkers[i]);
@@ -267,6 +262,16 @@
                     context.fillRect(x0, indicatorY-indicatorH, 1, 2*indicatorH);
 
                     i--;
+                }
+
+                // Period markers in the future
+                if (periodMarkers.length > 0) {
+                    const t0 = periodMarkers[periodMarkers.length - 1] + dotDurationMS;
+                    let t = t0;
+                    while (barX(t) < canvas.width) {
+                        context.fillRect(barX(t), indicatorY-indicatorH, 1, 2*indicatorH);
+                        t += dotDurationMS;
+                    }
                 }
 
                 if (!pressState && (letterBuffer.length > 0)) {
