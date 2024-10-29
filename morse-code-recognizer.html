@@ -51,7 +51,8 @@
             };
 
             function updateIndicator() {
-                if (updateIndicator.prevIndicatorState !== pressState) {
+                // Redraw only if state or position changes
+                if (updateIndicator.prevIndicatorState !== pressState || updateIndicator.prevCanvasWidth !== canvas.width) {
                     let indicatorY = canvas.height / 2 + 60;
                     let indicatorH = 10;
                     context.clearRect(originX-50,  0, 100, indicatorY);
@@ -64,6 +65,7 @@
                     context.fill();
                     context.lineWidth = 1;
                     updateIndicator.prevIndicatorState = pressState;
+                    updateIndicator.prevCanvasWidth = canvas.width;
                 }
             }
 
@@ -497,15 +499,15 @@
             window.onblur = cancelkeydown;
 
             // resize the canvas to fill browser window dynamically
-            //window.addEventListener('resize', resizeCanvas, false);
+            window.addEventListener('resize', resizeCanvas, false);
 
             function resizeCanvas() {
                 canvas.width = window.innerWidth;
                 originX = canvas.width - 300;
+                updateIndicator();
                 //canvas.height = window.innerHeight;
             }
             resizeCanvas();                                 
-            updateIndicator();
 
             // wait one second before starting animation
             setTimeout(function() {
@@ -526,6 +528,7 @@
     <label for="unitDuration">Unit duration:</label>
     <select name="unitDuration" id="unitDuration">
     </select>
+    <br>
     <canvas id="canvas0" height="300px"></canvas>
     <div id="notifications">&nbsp;</div>
     <br>
