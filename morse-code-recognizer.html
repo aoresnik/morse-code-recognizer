@@ -45,7 +45,7 @@
                         this.timerId = null;
                     }
                     this.timerId = setTimeout(function() {
-                        notifications.innerHTML = "";
+                        notifications.innerHTML = "&nbsp;";
                     }, 2000);
                 }
             };
@@ -526,7 +526,13 @@
     <label for="unitDuration">Unit duration:</label>
     <select name="unitDuration" id="unitDuration">
     </select>
-    <div id="legend"></div>
+    <canvas id="canvas0" height="300px"></canvas>
+    <div id="notifications">&nbsp;</div>
+    <br>
+    <div>
+        <p>Legend</p>
+        <div id="legend"></div>
+    </div>
     <br>
     <div>
         <p>Timings</p>        
@@ -538,7 +544,5 @@
             <li>Space between words: 5 units or more</li>
         </ul>
     </div>
-    <canvas id="canvas0" height="300px"></canvas>
-    <div id="notifications"></div>
 </html>
 </body>
