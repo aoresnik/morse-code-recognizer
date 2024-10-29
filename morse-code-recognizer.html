@@ -521,16 +521,16 @@
 <body onload="main()">
     <div>Morse Code Recognizer</div>
     <div>Use any key to signal in morse code</div>
+    <canvas id="canvas0" height="300px"></canvas>
+    <div id="notifications">&nbsp;</div>
+    <br>
     <label for="resultText">Text:</label>
     <textarea id="resultText" rows="4" cols="50" placeholder="" readonly="true"></textarea>
     <button id="copyText">Copy</button>
     <button id="clearText">Clear</button>
-    <label for="unitDuration">Unit duration:</label>
-    <select name="unitDuration" id="unitDuration">
-    </select>
     <br>
-    <canvas id="canvas0" height="300px"></canvas>
-    <div id="notifications">&nbsp;</div>
+    <label for="unitDuration">Unit duration:</label>
+    <select name="unitDuration" id="unitDuration"></select>
     <br>
     <div>
         <p>Legend</p>
