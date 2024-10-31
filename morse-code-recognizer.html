@@ -53,8 +53,6 @@
             function updateIndicator() {
                 // Redraw only if state or position changes
                 if (updateIndicator.prevIndicatorState !== pressState || updateIndicator.prevCanvasWidth !== canvas.width) {
-                    let indicatorY = canvas.height / 2 + 60;
-                    let indicatorH = 10;
                     context.clearRect(originX-50,  0, 100, indicatorY);
                     context.beginPath();
                     let shift = pressState ? 0 : 10;
@@ -210,9 +208,9 @@
                 }
             }
 
+            // This is slow - renders the whole timeline each frame.
+            // TODO: Optimization: keep the timeline in an offline canvas and then copy it to the main canvas
             function animate(canvas, context, startTime) {
-                let indicatorY = canvas.height / 2 + 60;
-                let indicatorH = 10;
                 // TODO: ensure that text is not drawn outside of this boundary
                 let textH = 50;
 
@@ -445,6 +443,9 @@
             var context = canvas.getContext('2d');
             var pressState = false;
 
+            const indicatorY = 65;
+            const indicatorH = 10;
+
             var dotDurationMS = 240;
             var unitDurationOptions = [60, 240, 400, 600];
 
@@ -519,10 +520,11 @@
 </head>
 
 <body onload="main()">
-    <div>Morse Code Recognizer</div>
+    <div style="font-weight: bold;">Morse Code Recognizer</div>
     <div>Use any key to signal in morse code</div>
-    <canvas id="canvas0" height="300px"></canvas>
-    <div id="notifications">&nbsp;</div>
+    <br>
+    <div id="notifications" style="width: 100%; text-align: right;">&nbsp;</div>
+    <canvas id="canvas0" height="150px"></canvas>
     <br>
     <label for="resultText">Text:</label>
     <textarea id="resultText" rows="4" cols="50" placeholder="" readonly="true"></textarea>
