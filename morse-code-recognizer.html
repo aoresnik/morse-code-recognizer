@@ -495,6 +495,9 @@
 
             document.onkeydown = keydown;
             document.onkeyup = keyup;
+            canvas.onmousedown = keydown;
+            canvas.onmouseup = keyup;
+            canvas.onmouseleave = keyup;
 
             // Fix: avoid beeping when exiting the tab with keyboard shortcut
             window.onblur = cancelkeydown;
@@ -560,3 +563,4 @@
     </div>
 </html>
 </body>
+
