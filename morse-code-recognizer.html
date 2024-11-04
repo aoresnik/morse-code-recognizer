@@ -53,7 +53,9 @@
             function updateIndicator() {
                 // Redraw only if state or position changes
                 if (updateIndicator.prevIndicatorState !== pressState || updateIndicator.prevCanvasWidth !== canvas.width) {
-                    context.clearRect(originX-50,  0, 100, indicatorY);
+                    context.fillStyle = 'white';
+                    context.fillRect(originX-50,  0, 100, indicatorY);
+                    context.fillStyle = 'black';
                     context.beginPath();
                     let shift = pressState ? 0 : 10;
                     context.moveTo(originX, indicatorY-indicatorH-1-shift);
@@ -213,7 +215,8 @@
                 // TODO: ensure that text is not drawn outside of this boundary
                 let textH = 50;
 
-                context.clearRect(0, indicatorY - indicatorH, canvas.width, indicatorH + indicatorH  + textH);
+                context.fillStyle = 'white';
+                context.fillRect(0, indicatorY - indicatorH, canvas.width, indicatorH + indicatorH  + textH);
 
                 function barX(t) {
                     return originX - ((new Date()).getTime() - t) / 10;
@@ -439,7 +442,10 @@
             legend.innerHTML = legentHTML;
 
             var canvas = document.getElementById('canvas0');
-            var context = canvas.getContext('2d');
+            var context = canvas.getContext('2d', { 
+                desychronized: true, // Attempt to reduce latency
+                alpha: false 
+            });
             var pressState = false;
 
             const indicatorY = 65;
@@ -507,6 +513,10 @@
             function resizeCanvas() {
                 canvas.width = window.innerWidth;
                 originX = canvas.width - 300;
+
+                context.fillStyle = 'white';
+                context.fillRect(0, 0, canvas.width, canvas.height);
+
                 updateIndicator();
                 //canvas.height = window.innerHeight;
             }
