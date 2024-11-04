@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<!-- Shows an indicator when any key is pressed. Planned as a basis for morse code typing parser. -->
+<!-- Morse code typing recognizer. -->
 
 <html>
 
@@ -128,7 +128,6 @@
                         addCharacter('[?]');
                     }
                 } else {
-                    // TODO: handle end of word space before the next key is pressed
                     if (duration < (1+tolerance) * dotDurationMS) {
                         console.log("(same letter space)");
                     } else if (duration < (1+tolerance) * 3 * dotDurationMS) {
