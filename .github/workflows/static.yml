@@ -34,14 +34,14 @@ jobs:
       - name: Replace single file
         uses: richardrigutins/replace-in-files@v2
         with:
-          files: 'README.md'
+          files: 'index.html'
           search-text: '{release}'
           replacement-text: ${{ github.ref_name }}
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload entire repository
-          path: '.'
+          path: 'index.html'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
