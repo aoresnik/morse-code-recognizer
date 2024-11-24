@@ -34,404 +34,426 @@
                     };
             })();
 
-            var notificationArea = {
-                timerId: null,
-                showNotification: function (message) {
+            class NotificationArea {
+                #timerId = null;
+                showNotification(message) {
                     let notifications = document.getElementById("notifications");
                     notifications.innerHTML = message;
                     console.log("Showing notification: " + message);
-                    if (this.timerId !== null) {
-                        clearTimeout(this.timerId);
-                        this.timerId = null;
+                    if (this.#timerId !== null) {
+                        clearTimeout(this.#timerId);
+                        this.#timerId = null;
                     }
-                    this.timerId = setTimeout(function() {
+                    this.#timerId = setTimeout(function() {
                         notifications.innerHTML = "&nbsp;";
                     }, 2000);
                 }
             };
 
-            function updateIndicator() {
-                // Redraw only if state or position changes
-                if (updateIndicator.prevIndicatorState !== pressState || updateIndicator.prevCanvasWidth !== canvas.width) {
-                    context.fillStyle = 'white';
-                    context.fillRect(originX-50,  0, 100, indicatorY);
-                    context.fillStyle = 'black';
-                    context.beginPath();
-                    let shift = pressState ? 0 : 10;
-                    context.moveTo(originX, indicatorY-indicatorH-1-shift);
-                    context.lineTo(originX-49, indicatorY-indicatorH-49-shift);
-                    context.lineTo(originX+49, indicatorY-indicatorH-49-shift);
-                    context.lineTo(originX, indicatorY-indicatorH-1-shift);
-                    context.fill();
-                    context.lineWidth = 1;
-                    updateIndicator.prevIndicatorState = pressState;
-                    updateIndicator.prevCanvasWidth = canvas.width;
-                }
-            }
+            const MAX_DASHES = 1000;
+            const MAX_PERIOD_MARKERS = 1000;
+            const tolerance = 0.4;
 
-            function updateRhythmIndicator() {
-                const d = new Date();
-                let time = d.getTime();
-                if (periodMarkers.length > 0) { 
-                    let lastPeriodStart = periodMarkers[periodMarkers.length - 1];
-                    if (time >= lastPeriodStart + dotDurationMS) {
-                        periodMarkers.push(lastPeriodStart + dotDurationMS);
+            class MorseTapeRecorder {
+                #dashes = [];
+                #periodMarkers = [];
+                #letterBuffer = "";
+                #pressState = false;
+                indicatorY = 65;
+                indicatorH = 10;
+                dotDurationMS = 240;
+                static letterToMorseCode = undefined;
+                static morseCodeToLetter = undefined;
+
+                static {
+                    this.letterToMorseCode = new Map([
+                        ["a", ".-"],
+                        ["b", "-..."],
+                        ["c", "-.-."],
+                        ["d", "-.."],
+                        ["e", "."], 
+                        ["f", "..-."],
+                        ["g", "--."],
+                        ["h", "...."],
+                        ["i", ".."],
+                        ["j", ".---"],
+                        ["k", "-.-"],
+                        ["l", ".-.."],
+                        ["m", "--"],
+                        ["n", "-."],
+                        ["o", "---"],
+                        ["p", ".--."],
+                        ["q", "--.-"],
+                        ["r", ".-."],
+                        ["s", "..."],
+                        ["t", "-"],
+                        ["u", "..-"],
+                        ["v", "...-"],
+                        ["x", "-..-"],
+                        ["y", "-.--"],
+                        ["z", "--.."],
+
+                        ["1", ".----"],
+                        ["2", "..---"],
+                        ["3", "...--"],
+                        ["4", "....-"],
+                        ["5", "....."],  
+                        ["6", "-...."],
+                        ["7", "--..."],
+                        ["8", "---.."],
+                        ["9", "----."],
+                        ["0", "-----"],
+                    ]);
+                    this.morseCodeToLetter = new Map();
+                    for (const key of this.letterToMorseCode.keys()) {
+                        this.morseCodeToLetter.set(this.letterToMorseCode.get(key), key);
                     }
-                } else {
-                    periodMarkers.push(time);
-                }
-                if (periodMarkers.length > MAX_PERIOD_MARKERS) {
-                    periodMarkers.shift();
-                }
-            }
+                };
 
-            function addCharacter(character) {
-                let resultText = document.getElementById("resultText");
-                resultText.value = resultText.value + character;
-                resultText.scrollTop = resultText.scrollHeight;
-            }
+                updateIndicator() {
+                    // Redraw only if state or position changes
+                    if (this.updateIndicator.prevIndicatorState !== this.#pressState || this.updateIndicator.prevCanvasWidth !== canvas.width) {
+                        context.fillStyle = 'white';
+                        context.fillRect(originX-50,  0, 100, this.indicatorY);
+                        context.fillStyle = 'black';
+                        context.beginPath();
+                        let shift = this.#pressState ? 0 : 10;
+                        context.moveTo(originX, this.indicatorY-this.indicatorH-1-shift);
+                        context.lineTo(originX-49, this.indicatorY-this.indicatorH-49-shift);
+                        context.lineTo(originX+49, this.indicatorY-this.indicatorH-49-shift);
+                        context.lineTo(originX, this.indicatorY-this.indicatorH-1-shift);
+                        context.fill();
+                        context.lineWidth = 1;
+                        this.updateIndicator.prevIndicatorState = this.#pressState;
+                        this.updateIndicator.prevCanvasWidth = canvas.width;
+                    }
+                };
 
-            function parseLetter() {
-                var result = "";
-                console.log("Parsing morse sequence: " + letterBuffer);
-                if (letterBuffer !== "") {
-                    let letter = morseCodeToLetter.get(letterBuffer);
-                    if (letter !== undefined) {
-                        addCharacter(letter);
-                        result = letter;
+                updateRhythmIndicator() {
+                    const d = new Date();
+                    let time = d.getTime();
+                    if (this.#periodMarkers.length > 0) {  
+                        let lastPeriodStart = this.#periodMarkers[this.#periodMarkers.length - 1];
+                        if (time >= lastPeriodStart + this.dotDurationMS) {
+                            this.#periodMarkers.push(lastPeriodStart + this.dotDurationMS);
+                        }
                     } else {
-                        notificationArea.showNotification("Unknown morse sequence: " + letterBuffer);
-                        result = "[?]";
+                        this.#periodMarkers.push(time);
                     }
-                }
-                letterBuffer = "";
-                return result;
-            }
+                    if (this.#periodMarkers.length > MAX_PERIOD_MARKERS) {
+                        this.#periodMarkers.shift();
+                    }
+                };
 
-            function handleDash(dash) {
-                let duration = dash.end - dash.start;
-                if (dash.pressed) {
-                    if (duration < (1-tolerance) * dotDurationMS) {
-                        notificationArea.showNotification("Too short press");
-                        addCharacter('[?]');
-                    } else if (duration < (1+tolerance) * dotDurationMS) {
-                        letterBuffer = letterBuffer + ".";
-                        notificationArea.showNotification("Dot");
-                        console.log("Buffer: " + letterBuffer);
-                    } else if (duration < (1-tolerance) * 3 * dotDurationMS) {
-                        notificationArea.showNotification("Indistinct if dot or dash");
-                        addCharacter('[?]');
-                    } else if (duration < (1+tolerance) * 3 * dotDurationMS) {
-                        letterBuffer = letterBuffer + "-";
-                        notificationArea.showNotification("Dash");
-                        console.log("Buffer: " + letterBuffer);
+                #addCharacter(character) {
+                    let resultText = document.getElementById("resultText");
+                    resultText.value = resultText.value + character;
+                    resultText.scrollTop = resultText.scrollHeight;
+                };
+
+                #parseLetter() {
+                    var result = "";
+                    console.log("Parsing morse sequence: " + this.#letterBuffer);
+                    if (this.#letterBuffer !== "") {
+                        let letter = MorseTapeRecorder.morseCodeToLetter.get(this.#letterBuffer);
+                        if (letter !== undefined) {
+                            this.#addCharacter(letter);
+                            result = letter;
+                        } else {
+                            notificationArea.showNotification("Unknown morse sequence: " + this.#letterBuffer);
+                            result = "[?]";
+                        }
+                    }
+                    this.#letterBuffer = "";
+                    return result;
+                };
+
+                #handleDash(dash) {
+                    let duration = dash.end - dash.start;
+                    if (dash.pressed) {
+                        if (duration < (1-tolerance) * this.dotDurationMS) {
+                            notificationArea.showNotification("Too short press");
+                            this.#addCharacter('[?]');
+                        } else if (duration < (1+tolerance) * this.dotDurationMS) {
+                            this.#letterBuffer = this.#letterBuffer + ".";
+                            notificationArea.showNotification("Dot");
+                            console.log("Buffer: " + this.#letterBuffer);
+                        } else if (duration < (1-tolerance) * 3 * this.dotDurationMS) {
+                            notificationArea.showNotification("Indistinct if dot or dash");
+                            this.#addCharacter('[?]');
+                        } else if (duration < (1+tolerance) * 3 * this.dotDurationMS) {
+                            this.#letterBuffer = this.#letterBuffer + "-";
+                            notificationArea.showNotification("Dash");
+                            console.log("Buffer: " + this.#letterBuffer);
+                        } else {
+                            notificationArea.showNotification("Too long press");
+                            this.#addCharacter('[?]');
+                        }
                     } else {
-                        notificationArea.showNotification("Too long press");
-                        addCharacter('[?]');
+                        if (duration < (1+tolerance) * this.dotDurationMS) {
+                            console.log("(same letter space)");
+                        } else if (duration < (1+tolerance) * 3 * this.dotDurationMS) {
+                            console.log("(different letter space)");
+                            this.#parseLetter();
+                        } else if (duration < (1+tolerance) * 5 * this.dotDurationMS) {
+                            console.log("(different word space)");
+                            this.#parseLetter();
+                            this.#addCharacter(' ');
+                        } else {
+                            console.log("(Unknown space, assuming word space)");
+                            this.#parseLetter();
+                            this.#addCharacter(' ')
+                        }
                     }
-                } else {
-                    if (duration < (1+tolerance) * dotDurationMS) {
-                        console.log("(same letter space)");
-                    } else if (duration < (1+tolerance) * 3 * dotDurationMS) {
-                        console.log("(different letter space)");
-                        parseLetter();
-                    } else if (duration < (1+tolerance) * 5 * dotDurationMS) {
-                        console.log("(different word space)");
-                        parseLetter();
-                        addCharacter(' ');
-                    } else {
-                        console.log("(Unknown space, assuming word space)");
-                        parseLetter();
-                        addCharacter(' ')
-                    }
-                }
-            }
+                };
 
-            function keydown(e) {
-                e = e || window.event;
-                if (!pressState) {
-                    // Only if not pressed
-                    const t = (new Date()).getTime()
+                keydown(e) {
+                    e = e || window.event;
+                    if (!this.#pressState) {
+                        // Only if not pressed
+                        const t = (new Date()).getTime()
 
-                    beeper.start();
-                    if (KEYS_DEBUG) {
-                        console.log("Key pressed at " + t);
-                    }
-                    pressState = true;
-                    if (dashes.length > 0) {
-                        dashes[dashes.length - 1].end = t;
-                        handleDash(dashes[dashes.length - 1]);
-                    } 
-                    dashes.push({
-                        pressed: true,
-                        start: t,
-                        end: null
-                    });
-                    if (dashes.length > MAX_DASHES) {
-                        dashes.shift();
-                    }
-
-                    updateIndicator();
-                }
-            }
-
-            function keyup(e) {
-                e = e || window.event;
-                if (pressState) {
-                    // Only if pressed
-                    const t = (new Date()).getTime()
-                    beeper.stop();
-                    if (KEYS_DEBUG) {
-                        console.log("Key released at " + t);    
-                    }
-                    pressState = false;
-                    updateIndicator();
-                    dashes[dashes.length - 1].end = t;
-                    handleDash(dashes[dashes.length - 1]);
-                    dashes.push({
-                            pressed: false,
+                        beeper.start();
+                        if (KEYS_DEBUG) {
+                            console.log("Key pressed at " + t);
+                        }
+                        this.#pressState = true;
+                        if (this.#dashes.length > 0) {
+                            this.#dashes[this.#dashes.length - 1].end = t;
+                            this.#handleDash(this.#dashes[this.#dashes.length - 1]);
+                        } 
+                        this.#dashes.push({
+                            pressed: true,
                             start: t,
                             end: null
                         });
+                        if (this.#dashes.length > MAX_DASHES) {
+                            this.#dashes.shift();
+                        }
+
+                        this.updateIndicator();
+                    }
+                };
+
+                keyup(e) {
+                    e = e || window.event;
+                    if (this.#pressState) {
+                        // Only if pressed
+                        const t = (new Date()).getTime()
+                        beeper.stop();
+                        if (KEYS_DEBUG) {
+                            console.log("Key released at " + t);    
+                        }
+                        this.#pressState = false;
+                        this.updateIndicator();
+                        this.#dashes[this.#dashes.length - 1].end = t;
+                        this.#handleDash(this.#dashes[this.#dashes.length - 1]);
+                        this.#dashes.push({
+                                pressed: false,
+                                start: t,
+                                end: null
+                            });
+                    }
+                };
+
+                cancelkeydown(e) {
+                    console.log("Losing focus");
+                    if (this.#pressState) {
+                        beeper.stop();
+                        this.#dashes.splice(-1);
+                        if (this.#dashes.length > 0) {
+                            this.#dashes[this.#dashes.length - 1].end = undefined;
+                        }
+                        this.#pressState = false;
+                        this.updateIndicator();
+                    }
+                };
+
+                // This is slow - renders the whole timeline each frame.
+                // TODO: Optimization: keep the timeline in an offline canvas and then copy it to the main canvas
+                animate(canvas, context, startTime) {
+                    // TODO: ensure that text is not drawn outside of this boundary
+                    let textH = 50;
+
+                    context.fillStyle = 'white';
+                    context.fillRect(0, this.indicatorY - this.indicatorH, canvas.width, this.indicatorH + this.indicatorH  + textH);
+
+                    function barX(t) {
+                        return originX - ((new Date()).getTime() - t) / 10;
+                    }
+
+                    this.updateRhythmIndicator();
+
+                    context.fillStyle = 'black';
+                    context.save();
+                    context.textAlign = 'right';
+                    let i = this.#dashes.length - 1;
+                    while (i >= 0) {
+                        const x0 = barX(this.#dashes[i].start);
+                        const x1 = this.#dashes[i].end ? barX(this.#dashes[i].end) : originX;
+                        if (x1 < 0)
+                        {
+                            break;
+                        }
+                        //console.log("Drawing bar from " + x0 + "-" + x1);
+
+                        if (this.#dashes[i].pressed)
+                        {
+                            context.fillRect(x0, this.indicatorY-this.indicatorH, x1 - x0, this.indicatorH);
+                        }
+                        if (this.#dashes[i].end)
+                        {
+                            context.translate((x1+x0)/2, this.indicatorY+this.indicatorH+2);
+                            context.rotate(-Math.PI / 2);
+                            context.fillText((this.#dashes[i].end-this.#dashes[i].start) + " ms", 0, 10 / 2);
+                            context.resetTransform();
+                        }
+
+                        i--;
+                    }
+                    context.restore();
+
+                    // Period markers in the past
+                    i = this.#periodMarkers.length - 1;
+                    while (i >= 0) {
+                        const x0 = barX(this.#periodMarkers[i]);
+                        if (x0 < 0)
+                        {
+                            break;
+                        }
+                        context.fillRect(x0, this.indicatorY-this.indicatorH, 1, 2*this.indicatorH);
+
+                        i--;
+                    }
+
+                    // Period markers in the future
+                    if (this.#periodMarkers.length > 0) {
+                        const t0 = this.#periodMarkers[this.#periodMarkers.length - 1] + this.dotDurationMS;
+                        let t = t0;
+                        while (barX(t) < canvas.width) {
+                            context.fillRect(barX(t), this.indicatorY-this.indicatorH, 1, 2*this.indicatorH);
+                            t += this.dotDurationMS;
+                        }
+                    }
+
+                    if (!this.#pressState && (this.#letterBuffer.length > 0)) {
+                        const t = (new Date()).getTime()
+                        const tdelta = t-this.#dashes[this.#dashes.length - 1].start
+                        if (tdelta > 3 * this.dotDurationMS + (tolerance * 3 * this.dotDurationMS))
+                        {
+                            let sequence = this.#letterBuffer;
+                            let parsedAs = this.#parseLetter();
+                            notificationArea.showNotification("Max time between letters exceeded - recognizing a sequence " + sequence + " as " + parsedAs);
+                        }
+                    } 
+
+                    // request new frame
+                    requestAnimFrame(() => {
+                        this.animate(canvas, context, startTime);
+                    });
                 }
-            }
-
-            function cancelkeydown(e) {
-                console.log("Losing focus");
-                if (pressState) {
-                    beeper.stop();
-                    dashes.splice(-1);
-                    if (dashes.length > 0) {
-                        dashes[dashes.length - 1].end = undefined;
-                    }
-                    pressState = false;
-                    updateIndicator();
-                }
-            }
-
-            // This is slow - renders the whole timeline each frame.
-            // TODO: Optimization: keep the timeline in an offline canvas and then copy it to the main canvas
-            function animate(canvas, context, startTime) {
-                // TODO: ensure that text is not drawn outside of this boundary
-                let textH = 50;
-
-                context.fillStyle = 'white';
-                context.fillRect(0, indicatorY - indicatorH, canvas.width, indicatorH + indicatorH  + textH);
-
-                function barX(t) {
-                    return originX - ((new Date()).getTime() - t) / 10;
-                }
-
-                updateRhythmIndicator();
-
-                context.fillStyle = 'black';
-                context.save();
-                context.textAlign = 'right';
-                let i = dashes.length - 1;
-                while (i >= 0) {
-                    const x0 = barX(dashes[i].start);
-                    const x1 = dashes[i].end ? barX(dashes[i].end) : originX;
-                    if (x1 < 0)
-                    {
-                        break;
-                    }
-                    //console.log("Drawing bar from " + x0 + "-" + x1);
-
-                    if (dashes[i].pressed)
-                    {
-                        context.fillRect(x0, indicatorY-indicatorH, x1 - x0, indicatorH);
-                    }
-                    if (dashes[i].end)
-                    {
-                        context.translate((x1+x0)/2, indicatorY+indicatorH+2);
-                        context.rotate(-Math.PI / 2);
-                        context.fillText((dashes[i].end-dashes[i].start) + " ms", 0, 10 / 2);
-                        context.resetTransform();
-                    }
-
-                    i--;
-                }
-                context.restore();
-
-                // Period markers in the past
-                i = periodMarkers.length - 1;
-                while (i >= 0) {
-                    const x0 = barX(periodMarkers[i]);
-                    if (x0 < 0)
-                    {
-                        break;
-                    }
-                    context.fillRect(x0, indicatorY-indicatorH, 1, 2*indicatorH);
-
-                    i--;
-                }
-
-                // Period markers in the future
-                if (periodMarkers.length > 0) {
-                    const t0 = periodMarkers[periodMarkers.length - 1] + dotDurationMS;
-                    let t = t0;
-                    while (barX(t) < canvas.width) {
-                        context.fillRect(barX(t), indicatorY-indicatorH, 1, 2*indicatorH);
-                        t += dotDurationMS;
-                    }
-                }
-
-                if (!pressState && (letterBuffer.length > 0)) {
-                    //console.log("Key pressed at " + t);
-                    const t = (new Date()).getTime()
-                    if (t-dashes[dashes.length - 1].start > 3 * dotDurationMS + (tolerance * 3 * dotDurationMS))
-                    {
-                        let sequence = letterBuffer;
-                        let parsedAs = parseLetter();
-                        notificationArea.showNotification("Max time between letters exceeded - recognizing a sequence " + sequence + " as " + parsedAs);
-                    }
-                } 
-
-                // request new frame
-                requestAnimFrame(function() {
-                    animate(canvas, context, startTime);
-                });
-            }
+            };
 
             let AudioContext = window.AudioContext || window.webkitAudioContext;
-            var beeper = {
-                audioCtx: new AudioContext({
+
+            class Beeper {
+                #audioCtx = new AudioContext({
                     latencyHint: 'interactive',
                     // Preferred frequency is 44100 Hz (loops calculated for it)
                     sampleRate: 44100,
-                }),
-                channels: 1,
+                });
+
+                #channels = 1;
 
                 /**
                  * See: https://lcwo.net/forum/1494
                  * 641 Hz, but changed, so that integer number of samples (70) represent a
                  * period when sample rate is 44100 Hz. This is to reduce pops at the end of tone.
                  */
-                FREQ: 630,
-                RAMP_UP_TIME_MS: 2,
-                VOLUME: 0.1,
+                FREQ = 630;
+                RAMP_UP_TIME_MS = 2;
+                VOLUME = 0.1;
 
-                beepSoundBuffer: null,
-                soundSource: null,
-                playSamples: 0,
+                #beepSoundBuffer = null;
+                #soundSource = null;
+                #playSamples = 0;
 
-                start: function() {
+                start() {
                     // Start playing Morse beep
                     // see https://developer.mozilla.org/en-US/docs/Web/API/AudioBufferSourceNode
                     // see https://mdn.github.io/webaudio-examples/audio-buffer/
-                    this.soundSource = this.audioCtx.createBufferSource();
-                    this.soundSource.buffer = this.beepSoundBuffer;
-                    this.soundSource.connect(this.audioCtx.destination);
-                    this.soundSource.loop = true;
+                    this.#soundSource = this.#audioCtx.createBufferSource();
+                    this.#soundSource.buffer = this.#beepSoundBuffer;
+                    this.#soundSource.connect(this.#audioCtx.destination);
+                    this.#soundSource.loop = true;
                     // Continuous tone is between these points in time (between ramp-up and ramp down)
-                    this.soundSource.loopStart = this.RAMP_UP_TIME_MS/1000.0;
-                    this.soundSource.loopEnd = this.playSamples/this.audioCtx.sampleRate-this.RAMP_UP_TIME_MS/1000.0;
+                    this.#soundSource.loopStart = this.RAMP_UP_TIME_MS/1000.0;
+                    this.#soundSource.loopEnd = this.#playSamples/this.#audioCtx.sampleRate-this.RAMP_UP_TIME_MS/1000.0;
 
                     // start the source playing
-                    this.soundSource.start();
+                    this.#soundSource.start();
 
-                },
-                stop: function() {
+                }
+
+                stop() {
                     // Stop playing Morse beep
-                    if (this.soundSource) {
-                        this.soundSource.stop();
+                    if (this.#soundSource) {
+                        this.#soundSource.stop();
                     }
-                },
-                init: function() {
+                }
 
+                #ramp_up_envelope (i, sampleRate) {
+                    if (i < (this.RAMP_UP_TIME_MS/1000.0 * sampleRate))
+                    {
+                        return i/(this.RAMP_UP_TIME_MS/1000.0 * sampleRate);
+                    }
+                    else if (i > (this.#playSamples - (this.RAMP_UP_TIME_MS/1000.0 * sampleRate)))
+                    {
+                        return (this.#playSamples - i)/(this.RAMP_UP_TIME_MS/1000.0 * sampleRate);
+                    }
+                    else
+                    {
+                        return 1.0;
+                    }
+                }
+
+                constructor() {
                     let BUFFER_LEN_MS = 100+2*this.RAMP_UP_TIME_MS; // High latency, but I was unable to get clear audio with less than 100 ms
 
                     // Create an empty two second stereo buffer at the
                     // sample rate of the AudioContext
-                    let frameCount = this.audioCtx.sampleRate * 2.0;
+                    let frameCount = this.#audioCtx.sampleRate * 2.0;
 
                     // Create a buffer with continuous tone, with volume ramp up and down at start and end
-                    let samplesPerPeriod = this.audioCtx.sampleRate / (this.FREQ * 2.0 * Math.PI);
-                    let playPeriods = (BUFFER_LEN_MS / 1000.0 * this.audioCtx.sampleRate) / samplesPerPeriod;
-                    this.playSamples = Math.ceil(playPeriods * samplesPerPeriod);
+                    let samplesPerPeriod = this.#audioCtx.sampleRate / (this.FREQ * 2.0 * Math.PI);
+                    let playPeriods = (BUFFER_LEN_MS / 1000.0 * this.#audioCtx.sampleRate) / samplesPerPeriod;
+                    this.#playSamples = Math.ceil(playPeriods * samplesPerPeriod);
 
-                    let ramp_up_envelope = function(i, sampleRate) {
-                        if (i < (this.RAMP_UP_TIME_MS/1000.0 * sampleRate))
-                        {
-                            return i/(this.RAMP_UP_TIME_MS/1000.0 * sampleRate);
-                        }
-                        else if (i > (this.playSamples - (this.RAMP_UP_TIME_MS/1000.0 * sampleRate)))
-                        {
-                            return (this.playSamples - i)/(this.RAMP_UP_TIME_MS/1000.0 * sampleRate);
-                        }
-                        else
-                        {
-                            return 1.0;
-                        }
-                    };
-                    this.beepSoundBuffer = this.audioCtx.createBuffer(this.channels, this.playSamples, this.audioCtx.sampleRate);
+                    this.#beepSoundBuffer = this.#audioCtx.createBuffer(this.#channels, this.#playSamples, this.#audioCtx.sampleRate);
 
-                    for (let channel = 0; channel < this.channels; channel++) {
+                    for (let channel = 0; channel < this.#channels; channel++) {
                         // This gives us the actual array that contains the data
-                        let nowBuffering = this.beepSoundBuffer.getChannelData(channel);
+                        let nowBuffering = this.#beepSoundBuffer.getChannelData(channel);
                         for (let i = 0; i < frameCount; i++) {
                             let angle = i / samplesPerPeriod;
-                            nowBuffering[i] = ramp_up_envelope(i, this.audioCtx.sampleRate) * Math.sin(angle) * this.VOLUME;
+                            nowBuffering[i] = this.#ramp_up_envelope(i, this.#audioCtx.sampleRate) * Math.sin(angle) * this.VOLUME;
                         }
                     }
                 }
             }
 
-            beeper.init();
-
-            const letterToMorseCode  = new Map([
-                ["a", ".-"],
-                ["b", "-..."],
-                ["c", "-.-."],
-                ["d", "-.."],
-                ["e", "."], 
-                ["f", "..-."],
-                ["g", "--."],
-                ["h", "...."],
-                ["i", ".."],
-                ["j", ".---"],
-                ["k", "-.-"],
-                ["l", ".-.."],
-                ["m", "--"],
-                ["n", "-."],
-                ["o", "---"],
-                ["p", ".--."],
-                ["q", "--.-"],
-                ["r", ".-."],
-                ["s", "..."],
-                ["t", "-"],
-                ["u", "..-"],
-                ["v", "...-"],
-                ["x", "-..-"],
-                ["y", "-.--"],
-                ["z", "--.."],
-
-                ["1", ".----"],
-                ["2", "..---"],
-                ["3", "...--"],
-                ["4", "....-"],
-                ["5", "....."],  
-                ["6", "-...."],
-                ["7", "--..."],
-                ["8", "---.."],
-                ["9", "----."],
-                ["0", "-----"],
-            ]);
-
-            const morseCodeToLetter = new Map();
+            var notificationArea = new NotificationArea();
+            var beeper = new Beeper();
+            var morseTapeRecorder = new MorseTapeRecorder();
 
             const KEYS_DEBUG = false;
-
-            for (const key of letterToMorseCode.keys()) {
-                morseCodeToLetter.set(letterToMorseCode.get(key), key);
-            }
 
             const legend = document.getElementById("legend");
             const MAX_PER_COLUMN = 5;
             let legentHTML = '<div class="legend-row"><div class="legend-column">';
             let i = 0;
-            for (const key of letterToMorseCode.keys()) {
-                legentHTML +=  key + "&nbsp;" + letterToMorseCode.get(key) + "<br/>";
+            for (const key of MorseTapeRecorder.letterToMorseCode.keys()) {
+                legentHTML +=  key + "&nbsp;" + MorseTapeRecorder.letterToMorseCode.get(key) + "<br/>";
                 i++;
                 if (i >= MAX_PER_COLUMN) {
                     legentHTML += '</div><div class="legend-column">';
@@ -446,12 +468,7 @@
                 desychronized: true, // Attempt to reduce latency
                 alpha: false 
             });
-            var pressState = false;
 
-            const indicatorY = 65;
-            const indicatorH = 10;
-
-            var dotDurationMS = 240;
             var unitDurationOptions = [60, 240, 400, 600];
 
             var unitDurationSelect = document.getElementById('unitDuration');
@@ -459,7 +476,7 @@
             for (let i = 0; i < unitDurationOptions.length; i++) {
                 let option = document.createElement("option");
                 option.value = unitDurationOptions[i];
-                if (unitDurationOptions[i] === dotDurationMS) {
+                if (unitDurationOptions[i] === morseTapeRecorder.dotDurationMS) {
                     option.selected = true;
                 }
                 let wpm = Math.round(1 / (unitDurationOptions[i] * 50 / 60 / 1000));
@@ -468,7 +485,7 @@
             }
 
             unitDurationSelect.onchange = function() {
-                dotDurationMS = parseInt(unitDurationSelect.value);
+                morseTapeRecorder.dotDurationMS = parseInt(unitDurationSelect.value);
                 let resultText = document.getElementById("resultText");
                 resultText.focus();
             }
@@ -487,25 +504,14 @@
                 document.execCommand("copy");
             }
 
-
-            const MAX_DASHES = 1000;
-            const MAX_PERIOD_MARKERS = 1000;
-
-            var dashes = [];
-            var periodMarkers = [];
-
-            const tolerance = 0.4;
-
-            var letterBuffer = "";
-
-            document.onkeydown = keydown;
-            document.onkeyup = keyup;
-            canvas.onmousedown = keydown;
-            canvas.onmouseup = keyup;
-            canvas.onmouseleave = keyup;
+            document.onkeydown = function(e) { morseTapeRecorder.keydown(e); };
+            document.onkeyup = function(e) { morseTapeRecorder.keyup(e);  };
+            canvas.onmousedown = function(e) { morseTapeRecorder.keydown(e);  };
+            canvas.onmouseup = function(e) { morseTapeRecorder.keyup(e);  };
+            canvas.onmouseleave = function(e) { morseTapeRecorder.keyup(e);  };
 
             // Fix: avoid beeping when exiting the tab with keyboard shortcut
-            window.onblur = cancelkeydown;
+            window.onblur = function(e) { morseTapeRecorder.cancelkeydown(e); };
 
             // resize the canvas to fill browser window dynamically
             window.addEventListener('resize', resizeCanvas, false);
@@ -517,15 +523,14 @@
                 context.fillStyle = 'white';
                 context.fillRect(0, 0, canvas.width, canvas.height);
 
-                updateIndicator();
-                //canvas.height = window.innerHeight;
+                morseTapeRecorder.updateIndicator();
             }
             resizeCanvas();                                 
 
             // wait one second before starting animation
             setTimeout(function() {
                 var startTime = (new Date()).getTime();
-                animate(canvas, context, startTime);
+                morseTapeRecorder.animate(canvas, context, startTime);
             }, 1000);
         }
     </script>
