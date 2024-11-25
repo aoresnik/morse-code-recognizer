@@ -174,13 +174,10 @@
                         if (duration < (1-tolerance) * this.dotDurationMS) {
                             notificationArea.showNotification("Too short press");
                             this.#addCharacter('[?]');
-                        } else if (duration < (1+tolerance) * this.dotDurationMS) {
+                        } else if (duration < r2 * this.dotDurationMS) {
                             this.#letterBuffer = this.#letterBuffer + ".";
                             notificationArea.showNotification("Dot");
                             console.log("Buffer: " + this.#letterBuffer);
-                        } else if (duration < (1-tolerance) * 3 * this.dotDurationMS) {
-                            notificationArea.showNotification("Indistinct if dot or dash");
-                            this.#addCharacter('[?]');
                         } else if (duration < (1+tolerance) * 3 * this.dotDurationMS) {
                             this.#letterBuffer = this.#letterBuffer + "-";
                             notificationArea.showNotification("Dash");
